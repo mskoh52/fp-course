@@ -247,13 +247,14 @@ flattenAgain = flatMap id
 seqOptional ::
   List (Optional a)
   -> Optional (List a)
-seqOptional Nil = Full Nil
-seqOptional (Empty :. _) = Empty
--- seqOptional (Full x :. xs) = (\z -> Full (x :. z)) P.=<< seqOptional xs
-seqOptional (Full x :. xs) =
-  do
-    z <- seqOptional xs
-    return (x :. z)
+-- seqOptional Nil = Full Nil
+-- seqOptional (Empty :. _) = Empty
+-- -- seqOptional (Full x :. xs) = (\z -> Full (x :. z)) P.=<< seqOptional xs
+-- seqOptional (Full x :. xs) =
+--   do
+--     z <- seqOptional xs
+--     return (x :. z)
+seqOptional = foldRight (twiceOptional  (:.)) (Full Nil)
 
 
 -- | Find the first element in the list matching the predicate.
