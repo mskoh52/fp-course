@@ -85,46 +85,99 @@ printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
+-- printFile fp contents = do
+--   putStrLn $ "========" ++ fp ++ "========"
+--   putStrLn contents
+printFile fp contents =
+  putStrLn ("======== " ++ fp)
+  >> putStrLn contents
 
 -- Given a list of (file name and file contents), print each.
 -- Use @printFile@.
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+-- printFiles files = foreach files $ uncurry printFile
+--   where
+--     foreach :: Monad m => List a -> (a -> m ()) -> m ()
+--     foreach Nil _ = return ()
+--     foreach (head :. rest) f = f head >> foreach rest f
+printFiles = void . sequence . (<$>) (uncurry printFile)
+{-
+>> :t void
+void :: Functor k => k a -> k ()
+
+>> :t sequence
+sequence :: Applicative k => List (k a) -> k (List a)
+
+>> :t (<$>)
+(<$>) :: Functor k => (a -> b) -> k a -> k b
+
+>> :t (uncurry printFile)
+(uncurry printFile) :: (FilePath, Chars) -> IO ()
+
+>> :t ((<$>) (uncurry printFile))
+((<$>) (uncurry printFile)) :: Functor k => k (FilePath, Chars) -> k (IO ())
+
+>> :t (sequence . (<$>) (uncurry printFile))
+(sequence . (<$>) (uncurry printFile))
+  :: List (FilePath, Chars) -> IO (List ())
+
+>> :t (void . sequence . (<$>) (uncurry printFile))
+(void . sequence . (<$>) (uncurry printFile))
+  :: List (FilePath, Chars) -> IO (List ())
+-}
 
 -- Given a file name, return (file name and file contents).
 -- Use @readFile@.
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+-- getFile fp = do
+--   contents <- readFile fp
+--   return (fp, contents)
+-- getFile fp = (\contents -> return (fp, contents)) =<< readFile fp
+getFile = lift2 (<$>) (,) readFile
 
 -- Given a list of file names, return list of (file name and file contents).
 -- Use @getFile@.
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo: Course.FileIO#getFiles"
+-- getFiles files = foreach files getFile
+--   where
+--     foreach :: Monad m => List a -> (a -> m b) -> m (List b)
+--     foreach Nil _ = return Nil
+--     -- foreach (head :. rest) f = do
+--     --   b <- f head
+--     --   r <- foreach rest f
+--     --   return $ b :. r
+--     -- foreach (head :. rest) f =
+--     --   f head >>= \b -> foreach rest f >>= \r -> return (b :. r)
+--     foreach (head :. rest) f =
+--       (\b -> (\r -> return (b :. r)) =<< foreach rest f) =<< f head
+getFiles = sequence . (<$>) getFile
+{-
+>> :t ((<$>) getFile)
+((<$>) getFile) :: Functor k => k FilePath -> k (IO (FilePath, Chars))
+>> :t (sequence . (<$>) getFile)
+(sequence . (<$>) getFile) :: List FilePath -> IO (List (FilePath, Chars))
+-}
 
 -- Given a file name, read it and for each line in that file, read and print contents of each.
 -- Use @getFiles@, @lines@, and @printFiles@.
 run ::
   FilePath
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run = uncurry printFile <=< getFile
 
 -- /Tip:/ use @getArgs@ and @run@
 main ::
   IO ()
-main =
-  error "todo: Course.FileIO#main"
+main = do
+  paths <- getArgs
+  contents <- getFiles paths
+  printFiles contents
 
 ----
 
